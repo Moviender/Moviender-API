@@ -38,8 +38,7 @@ async def insert_user(user: utils.User):
 async def get_starter():
     pipeline = [
         {"$sample": {"size": 15}},
-        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "poster_path": 1,
-                      "title": 1, "overview": 1, "release_date": 1, "vote_average": 1}}
+        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1 }}
     ]
 
     cursor = db.Movies.aggregate(pipeline)
@@ -63,8 +62,7 @@ def get_movies(page: int = 1, genres: List[int] = Query([])):
     pipeline = [
         {"$match": match_genres},
         {"$sort": {"popularity": -1}},
-        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "poster_path": 1,
-                      "title": 1, "overview": 1, "release_date": 1, "vote_average": 1}},
+        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1 }},
         {"$skip": PAGE_SIZE * (page - 1)},
         {"$limit": PAGE_SIZE}
     ]
@@ -94,8 +92,8 @@ def get_movie_details(movie_id: str, uid: str):
     if cursor != []:
         rating = cursor[0]["ratings"][movie_id]
     else:
-        rating = None
+        rating = 0.0
 
 
-    result["movie_rating"] = rating
+    result["user_rating"] = rating
     return result
