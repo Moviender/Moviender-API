@@ -6,7 +6,7 @@ from pymongo import MongoClient
 
 app = FastAPI()
 client = MongoClient('mongodb://localhost:27017')
-db = client.Moviender
+db = client.MovienderDB
 
 PAGE_SIZE = 15
 
@@ -38,7 +38,8 @@ async def insert_user(user: utils.User):
 async def get_starter():
     pipeline = [
         {"$sample": {"size": 15}},
-        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "poster_path": 1, "title": 1, "overview": 1}}
+        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "poster_path": 1,
+                      "title": 1, "overview": 1, "release_date": 1, "vote_average": 1}}
     ]
 
     cursor = db.Movies.aggregate(pipeline)
@@ -70,3 +71,31 @@ def get_movies(page: int = 1, genres: List[int] = Query([])):
     cursor = db.Movies.aggregate(pipeline)
 
     return list(cursor)
+
+
+@app.get("/movie_details/{movie_id}")
+def get_movie_details(movie_id: str, uid: str):
+    match_movie_id = {"movielens_id": movie_id}
+    pipeline = [
+        {"$match": match_movie_id},
+        {"$project": {"_id": 0, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1, "vote_average": 1}}
+    ]
+
+    cursor = list(db.Movies.aggregate(pipeline))
+    result = cursor[0]
+
+    match_uid = {"uid": uid, f"ratings.{movie_id}": {"$exists": True}}
+    pipeline = [
+        {"$match": match_uid},
+        {"$project": {"_id": 0, f"ratings.{movie_id}": 1}}
+    ]
+
+    cursor = list(db.Ratings.aggregate(pipeline))
+    if cursor != []:
+        rating = cursor[0]["ratings"][movie_id]
+    else:
+        rating = None
+
+
+    result["movie_rating"] = rating
+    return result
