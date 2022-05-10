@@ -38,7 +38,7 @@ async def insert_user(user: utils.User):
 async def get_starter():
     pipeline = [
         {"$sample": {"size": 15}},
-        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1 }}
+        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1}}
     ]
 
     cursor = db.Movies.aggregate(pipeline)
@@ -48,9 +48,28 @@ async def get_starter():
 
 @app.post("/userInitialization")
 async def insert_ratings(user_ratings: utils.UserRatings):
-    json_ratings = utils.convert_user_rating_to_json(user_ratings=user_ratings)
+    json_ratings = utils.convert_user_ratings_to_json(user_ratings=user_ratings)
 
     db.Ratings.insert_one(json_ratings)
+
+
+@app.post("/rating")
+async def update_rating(user_rating: utils.UserRatings):
+    uid = user_rating.uid
+    movie_id, rating = utils.get_movieid_rating(user_rating)
+
+    if rating != 0:
+        db.Ratings.update_one(
+            {"uid": uid},
+            {"$set": {f"ratings.{movie_id}": float(rating)}}
+        )
+    else:
+        db.Ratings.update_one(
+            {"uid": uid},
+            {"$unset": {f"ratings.{movie_id}": 1}},
+            False, True
+        )
+
 
 
 @app.get("/movies/{page}")
@@ -62,7 +81,7 @@ def get_movies(page: int = 1, genres: List[int] = Query([])):
     pipeline = [
         {"$match": match_genres},
         {"$sort": {"popularity": -1}},
-        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1 }},
+        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1}},
         {"$skip": PAGE_SIZE * (page - 1)},
         {"$limit": PAGE_SIZE}
     ]
@@ -93,7 +112,6 @@ def get_movie_details(movie_id: str, uid: str):
         rating = cursor[0]["ratings"][movie_id]
     else:
         rating = 0.0
-
 
     result["user_rating"] = rating
     return result
