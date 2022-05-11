@@ -1,8 +1,12 @@
 import pymongo.errors
+from pymongo.collation import Collation
+
 import utils
 from typing import List
 from fastapi import FastAPI, Query
 from pymongo import MongoClient
+
+import re
 
 app = FastAPI()
 client = MongoClient('mongodb://localhost:27017')
@@ -115,3 +119,18 @@ def get_movie_details(movie_id: str, uid: str):
 
     result["user_rating"] = rating
     return result
+
+@app.get("/search")
+async def get_search_results(title: str = ""):
+    regx = re.compile(f".*{title}.*", re.IGNORECASE)
+
+    pipeline = [
+        {"$match": {"title": {"$regex": regx}}},
+        {"$sort": {"popularity": -1}},
+        {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1, "title": 1}},
+        {"$limit": 20}
+    ]
+
+    cursor = list(db.Movies.aggregate(pipeline))
+
+    return cursor
