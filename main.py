@@ -1,18 +1,25 @@
-import pymongo.errors
-from pymongo.collation import Collation
-
-import utils
+import re
 from typing import List
+
+import pymongo.errors
 from fastapi import FastAPI, Query
 from pymongo import MongoClient
 
-import re
+import utils
 
 app = FastAPI()
 client = MongoClient('mongodb://localhost:27017')
 db = client.MovienderDB
 
 PAGE_SIZE = 15
+EXCLUDE_ID = {"_id": 0}
+
+PENDING = 1
+REQUEST = 2
+FRIEND = 3
+SUCCESSFUL_FRIEND_REQUEST = 1
+USERNAME_NOT_FOUND = -1
+ALREADY_EXISTS = -2
 
 
 @app.get("/")
@@ -75,7 +82,6 @@ async def update_rating(user_rating: utils.UserRatings):
         )
 
 
-
 @app.get("/movies/{page}")
 def get_movies(page: int = 1, genres: List[int] = Query([])):
     if genres:
@@ -120,6 +126,7 @@ def get_movie_details(movie_id: str, uid: str):
     result["user_rating"] = rating
     return result
 
+
 @app.get("/search")
 async def get_search_results(title: str = ""):
     regx = re.compile(f".*{title}.*", re.IGNORECASE)
@@ -134,3 +141,27 @@ async def get_search_results(title: str = ""):
     cursor = list(db.Movies.aggregate(pipeline))
 
     return cursor
+
+
+@app.post("/friend_request/{uid}")
+def friend_request(uid: str, friend_username: str):
+    try:
+        result = list(db.Users.find({"username": friend_username}, EXCLUDE_ID))[0]
+        friend_uid = result["uid"]
+
+        cursor = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}}))
+        if cursor == []:
+            db.Users.update_one(
+                {"uid": uid},
+                {"$set": {f"friend_list.{friend_uid}": PENDING}}
+            )
+            db.Users.update_one(
+                {"uid": friend_uid},
+                {"$set": {f"friend_list.{uid}": REQUEST}}
+            )
+            return SUCCESSFUL_FRIEND_REQUEST
+        else:
+            return ALREADY_EXISTS
+
+    except IndexError:
+        return USERNAME_NOT_FOUND
