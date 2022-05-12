@@ -20,6 +20,8 @@ FRIEND = 3
 SUCCESSFUL_FRIEND_REQUEST = 1
 USERNAME_NOT_FOUND = -1
 ALREADY_EXISTS = -2
+ACCEPT_REQUEST = 1
+DECLINE_REQUEST = 0
 
 
 @app.get("/")
@@ -165,3 +167,27 @@ def friend_request(uid: str, friend_username: str):
 
     except IndexError:
         return USERNAME_NOT_FOUND
+
+
+@app.post("/respond_friend_request/{uid}")
+def friend_request(uid: str, friend_uid: str, response: int):
+    if response == ACCEPT_REQUEST:
+        db.Users.update_one(
+            {"uid": uid},
+            {"$set": {f"friend_list.{friend_uid}": FRIEND}}
+        )
+        db.Users.update_one(
+            {"uid": friend_uid},
+            {"$set": {f"friend_list.{uid}": FRIEND}}
+        )
+    elif response == DECLINE_REQUEST:
+        db.Users.update_one(
+            {"uid": uid},
+            {"$unset": {f"friend_list.{friend_uid}": 1}},
+            False, True
+        )
+        db.Users.update_one(
+            {"uid": friend_uid},
+            {"$unset": {f"friend_list.{uid}": 1}},
+            False, True
+        )
