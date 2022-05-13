@@ -3,6 +3,7 @@ from typing import List
 
 import pymongo.errors
 from fastapi import FastAPI, Query
+from utils import State, Status
 from pymongo import MongoClient
 
 import utils
@@ -13,15 +14,6 @@ db = client.MovienderDB
 
 PAGE_SIZE = 15
 EXCLUDE_ID = {"_id": 0}
-
-PENDING = 1
-REQUEST = 2
-FRIEND = 3
-SUCCESSFUL_FRIEND_REQUEST = 1
-USERNAME_NOT_FOUND = -1
-ALREADY_EXISTS = -2
-ACCEPT_REQUEST = 1
-DECLINE_REQUEST = 0
 
 
 @app.get("/")
@@ -171,32 +163,32 @@ def friend_request(uid: str, friend_username: str):
         if cursor == []:
             db.Users.update_one(
                 {"uid": uid},
-                {"$set": {f"friend_list.{friend_uid}": PENDING}}
+                {"$set": {f"friend_list.{friend_uid}": State.PENDING}}
             )
             db.Users.update_one(
                 {"uid": friend_uid},
-                {"$set": {f"friend_list.{uid}": REQUEST}}
+                {"$set": {f"friend_list.{uid}": State.REQUEST}}
             )
-            return SUCCESSFUL_FRIEND_REQUEST
+            return Status.SUCCESSFUL_FRIEND_REQUEST
         else:
-            return ALREADY_EXISTS
+            return Status.ALREADY_EXISTS
 
     except IndexError:
-        return USERNAME_NOT_FOUND
+        return Status.USERNAME_NOT_FOUND
 
 
 @app.post("/respond_friend_request/{uid}")
-def friend_request(uid: str, friend_uid: str, response: int):
-    if response == ACCEPT_REQUEST:
+def respond_friend_request(uid: str, friend_uid: str, response: int):
+    if response == Status.ACCEPT_REQUEST:
         db.Users.update_one(
             {"uid": uid},
-            {"$set": {f"friend_list.{friend_uid}": FRIEND}}
+            {"$set": {f"friend_list.{friend_uid}": State.FRIEND}}
         )
         db.Users.update_one(
             {"uid": friend_uid},
-            {"$set": {f"friend_list.{uid}": FRIEND}}
+            {"$set": {f"friend_list.{uid}": State.FRIEND}}
         )
-    elif response == DECLINE_REQUEST:
+    elif response == Status.DECLINE_REQUEST:
         db.Users.update_one(
             {"uid": uid},
             {"$unset": {f"friend_list.{friend_uid}": 1}},

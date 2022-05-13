@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from enum import IntEnum
 
 
 class User(BaseModel):
@@ -20,6 +21,20 @@ class Rating(BaseModel):
 class UserRatings(BaseModel):
     uid: str
     ratings: list[Rating]
+
+
+class State(IntEnum):
+    PENDING = 1
+    REQUEST = 2
+    FRIEND = 3
+
+
+class Status(IntEnum):
+    SUCCESSFUL_FRIEND_REQUEST = 1
+    USERNAME_NOT_FOUND = -1
+    ALREADY_EXISTS = -2
+    ACCEPT_REQUEST = 1
+    DECLINE_REQUEST = 0
 
 
 def convert_user_ratings_to_json(user_ratings: UserRatings):
