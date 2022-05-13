@@ -34,19 +34,6 @@ async def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
 
-@app.post("/user")
-async def insert_user(user: utils.User):
-    try:
-        result = db.Users.insert_one({"uid": user.uid, "username": user.username})
-    except pymongo.errors.DuplicateKeyError:
-        return "Key already exists"
-
-    if result.acknowledged:
-        return "inserted"
-    else:
-        return "Error"
-
-
 @app.get("/starter")
 async def get_starter():
     pipeline = [
@@ -57,31 +44,6 @@ async def get_starter():
     cursor = db.Movies.aggregate(pipeline)
 
     return [movie_metadata for movie_metadata in cursor]
-
-
-@app.post("/userInitialization")
-async def insert_ratings(user_ratings: utils.UserRatings):
-    json_ratings = utils.convert_user_ratings_to_json(user_ratings=user_ratings)
-
-    db.Ratings.insert_one(json_ratings)
-
-
-@app.post("/rating")
-async def update_rating(user_rating: utils.UserRatings):
-    uid = user_rating.uid
-    movie_id, rating = utils.get_movieid_rating(user_rating)
-
-    if rating != 0:
-        db.Ratings.update_one(
-            {"uid": uid},
-            {"$set": {f"ratings.{movie_id}": float(rating)}}
-        )
-    else:
-        db.Ratings.update_one(
-            {"uid": uid},
-            {"$unset": {f"ratings.{movie_id}": 1}},
-            False, True
-        )
 
 
 @app.get("/movies/{page}")
@@ -143,6 +105,60 @@ async def get_search_results(title: str = ""):
     cursor = list(db.Movies.aggregate(pipeline))
 
     return cursor
+
+
+@app.get("/friends/{uid}")
+async def get_friend_list(uid: str):
+    cursor = list(db.Users.find({"uid": uid}))[0]["friend_list"]
+    friends = []
+    for friend_uid in cursor.keys():
+        # get username from friend uid
+        friend_username = list(db.Users.find({"uid": friend_uid}))[0]["username"]
+
+        # create Friend object
+        friend = utils.Friend(uid=friend_uid, username=friend_username, state=cursor[friend_uid])
+
+        friends.append(friend)
+
+    return friends
+
+
+@app.post("/user")
+async def insert_user(user: utils.User):
+    try:
+        result = db.Users.insert_one({"uid": user.uid, "username": user.username})
+    except pymongo.errors.DuplicateKeyError:
+        return "Key already exists"
+
+    if result.acknowledged:
+        return "inserted"
+    else:
+        return "Error"
+
+
+@app.post("/userInitialization")
+async def insert_ratings(user_ratings: utils.UserRatings):
+    json_ratings = utils.convert_user_ratings_to_json(user_ratings=user_ratings)
+
+    db.Ratings.insert_one(json_ratings)
+
+
+@app.post("/rating")
+async def update_rating(user_rating: utils.UserRatings):
+    uid = user_rating.uid
+    movie_id, rating = utils.get_movieid_rating(user_rating)
+
+    if rating != 0:
+        db.Ratings.update_one(
+            {"uid": uid},
+            {"$set": {f"ratings.{movie_id}": float(rating)}}
+        )
+    else:
+        db.Ratings.update_one(
+            {"uid": uid},
+            {"$unset": {f"ratings.{movie_id}": 1}},
+            False, True
+        )
 
 
 @app.post("/friend_request/{uid}")

@@ -6,6 +6,12 @@ class User(BaseModel):
     username: str
 
 
+class Friend(BaseModel):
+    uid: str
+    username: str
+    state: int
+
+
 class Rating(BaseModel):
     movielens_id: str
     rating: float
