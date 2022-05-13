@@ -37,7 +37,7 @@ async def say_hello(name: str):
 @app.post("/user")
 async def insert_user(user: utils.User):
     try:
-        result = db.Users.insert_one({"uid": user.uid})
+        result = db.Users.insert_one({"uid": user.uid, "username": user.username})
     except pymongo.errors.DuplicateKeyError:
         return "Key already exists"
 
