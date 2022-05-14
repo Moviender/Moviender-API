@@ -33,8 +33,10 @@ class Status(IntEnum):
     SUCCESSFUL_FRIEND_REQUEST = 1
     USERNAME_NOT_FOUND = -1
     ALREADY_EXISTS = -2
+    SAME_UID = -3
     ACCEPT_REQUEST = 1
     DECLINE_REQUEST = 0
+
 
 
 def convert_user_ratings_to_json(user_ratings: UserRatings):

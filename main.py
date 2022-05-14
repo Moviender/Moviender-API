@@ -159,6 +159,9 @@ def friend_request(uid: str, friend_username: str):
         result = list(db.Users.find({"username": friend_username}, EXCLUDE_ID))[0]
         friend_uid = result["uid"]
 
+        if uid == friend_uid:
+            return Status.SAME_UID
+
         cursor = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}}))
         if cursor == []:
             db.Users.update_one(
