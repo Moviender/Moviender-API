@@ -199,3 +199,18 @@ def respond_friend_request(uid: str, friend_uid: str, response: int):
             {"$unset": {f"friend_list.{uid}": 1}},
             False, True
         )
+
+
+@app.post("/delete_friend/{uid}")
+def delete_friend(uid: str, friend_uid: str):
+    db.Users.update_one(
+        {"uid": uid},
+        {"$unset": {f"friend_list.{friend_uid}": 1}},
+        False, True
+    )
+    db.Users.update_one(
+        {"uid": friend_uid},
+        {"$unset": {f"friend_list.{uid}": 1}},
+        False, True
+    )
+
