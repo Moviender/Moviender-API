@@ -38,7 +38,7 @@ async def get_starter():
     return [movie_metadata for movie_metadata in cursor]
 
 
-@app.get("/is_user_initialized/{uid}")
+@app.get("/initialized/{uid}")
 async def is_user_initialized(uid: str):
     try:
         result = list(db.Users.find({"uid": uid}, {"_id": 0, "is_user_initialized": 1}))[0]["is_user_initialized"]
@@ -113,8 +113,11 @@ async def get_search_results(title: str = ""):
 
 @app.get("/friends/{uid}")
 async def get_friend_list(uid: str):
-    cursor = list(db.Users.find({"uid": uid}))[0]["friend_list"]
+    cursor = list(db.Users.find({"uid": uid}))[0]
     friends = []
+    if "friend_list" not in cursor.keys():
+        return friends
+    cursor = cursor["friend_list"]
     for friend_uid in cursor.keys():
         # get username from friend uid
         friend_username = list(db.Users.find({"uid": friend_uid}))[0]["username"]
