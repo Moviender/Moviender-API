@@ -38,6 +38,18 @@ async def get_starter():
     return [movie_metadata for movie_metadata in cursor]
 
 
+@app.get("/is_user_initialized/{uid}")
+async def is_user_initialized(uid: str):
+    try:
+        result = list(db.Users.find({"uid": uid}, {"_id": 0, "is_user_initialized": 1}))[0]["is_user_initialized"]
+
+        print(result)
+
+        return result
+    except IndexError:
+        print(f"User with {uid} not found")
+
+
 @app.get("/movies/{page}")
 def get_movies(page: int = 1, genres: List[int] = Query([])):
     if genres:
@@ -118,10 +130,9 @@ async def get_friend_list(uid: str):
 @app.post("/user")
 async def insert_user(user: utils.User):
     try:
-        result = db.Users.insert_one({"uid": user.uid, "username": user.username})
+        result = db.Users.insert_one({"uid": user.uid, "username": user.username, "is_user_initialized": False})
     except pymongo.errors.DuplicateKeyError:
         return "Key already exists"
-
     if result.acknowledged:
         return "inserted"
     else:
@@ -133,6 +144,11 @@ async def insert_ratings(user_ratings: utils.UserRatings):
     json_ratings = utils.convert_user_ratings_to_json(user_ratings=user_ratings)
 
     db.Ratings.insert_one(json_ratings)
+
+    db.Users.update_one(
+        {"uid": user_ratings.uid},
+        {"$set": {"is_user_initialized": True}}
+    )
 
 
 @app.post("/rating")
@@ -216,4 +232,3 @@ def delete_friend(uid: str, friend_uid: str):
         {"$unset": {f"friend_list.{uid}": 1}},
         False, True
     )
-
