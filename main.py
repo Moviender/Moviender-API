@@ -113,11 +113,8 @@ async def get_search_results(title: str = ""):
 
 @app.get("/friends/{uid}")
 async def get_friend_list(uid: str):
-    cursor = list(db.Users.find({"uid": uid}))[0]
+    cursor = list(db.Users.find({"uid": uid}))[0]["friend_list"]
     friends = []
-    if "friend_list" not in cursor.keys():
-        return friends
-    cursor = cursor["friend_list"]
     for friend_uid in cursor.keys():
         # get username from friend uid
         friend_username = list(db.Users.find({"uid": friend_uid}))[0]["username"]
@@ -133,7 +130,11 @@ async def get_friend_list(uid: str):
 @app.post("/user")
 async def insert_user(user: utils.User):
     try:
-        result = db.Users.insert_one({"uid": user.uid, "username": user.username, "is_user_initialized": False})
+        result = db.Users.insert_one({
+            "uid": user.uid,
+            "username": user.username,
+            "is_user_initialized": False,
+            "friend_list": {}})
     except pymongo.errors.DuplicateKeyError:
         return "Key already exists"
     if result.acknowledged:
