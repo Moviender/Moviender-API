@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from enum import IntEnum
+from firebase_admin import messaging
 
 
 class User(BaseModel):
@@ -60,3 +61,16 @@ def get_movieid_rating(user_ratings: UserRatings):
         movie_id = movieid_tuple[1]
 
     return movie_id, rating
+
+
+def send_friend_request_notification(username: str, token: str):
+    message = messaging.Message(
+        data={
+            'name': username
+        },
+        token=token
+    )
+
+    response = messaging.send(message)
+    # Response is a message ID string.
+    print('Successfully sent message:', response)

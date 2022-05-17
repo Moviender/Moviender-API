@@ -6,6 +6,9 @@ from fastapi import FastAPI, Query
 from utils import State, Status
 from pymongo import MongoClient
 
+import firebase_admin
+from firebase_admin import credentials, messaging
+
 import utils
 
 app = FastAPI()
@@ -15,6 +18,8 @@ db = client.MovienderDB
 PAGE_SIZE = 15
 EXCLUDE_ID = {"_id": 0}
 
+cred = credentials.RefreshToken("firebase_admin_key.json")
+default_app = firebase_admin.initialize_app(cred)
 
 @app.get("/")
 async def root():
@@ -192,6 +197,10 @@ def friend_request(uid: str, friend_username: str):
 
         cursor = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}}))
         if cursor == []:
+            token = list(db.Users.find({"uid": friend_uid}))[0]["fcm_token"]
+
+            utils.send_friend_request_notification(friend_username, token)
+
             db.Users.update_one(
                 {"uid": uid},
                 {"$set": {f"friend_list.{friend_uid}": State.PENDING}}
