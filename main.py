@@ -143,6 +143,14 @@ async def insert_user(user: utils.User):
         return "Error"
 
 
+@app.post("/fcm_token/{uid}")
+async def update_user_fcm_token(uid: str, token: str):
+    db.Users.update_one(
+        {"uid": uid},
+        {"$set": {"fcm_token": token}}
+    )
+
+
 @app.post("/userInitialization")
 async def insert_ratings(user_ratings: utils.UserRatings):
     json_ratings = utils.convert_user_ratings_to_json(user_ratings=user_ratings)
