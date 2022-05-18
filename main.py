@@ -18,8 +18,8 @@ db = client.MovienderDB
 PAGE_SIZE = 15
 EXCLUDE_ID = {"_id": 0}
 
-cred = credentials.RefreshToken("firebase_admin_key.json")
-default_app = firebase_admin.initialize_app(cred)
+default_app = firebase_admin.initialize_app()
+
 
 @app.get("/")
 async def root():
@@ -198,8 +198,9 @@ def friend_request(uid: str, friend_username: str):
         cursor = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}}))
         if cursor == []:
             token = list(db.Users.find({"uid": friend_uid}))[0]["fcm_token"]
+            username = list(db.Users.find({"uid": uid}, EXCLUDE_ID))[0]["username"]
 
-            utils.send_friend_request_notification(friend_username, token)
+            utils.send_friend_request_notification(username, token)
 
             db.Users.update_one(
                 {"uid": uid},
