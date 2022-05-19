@@ -3,12 +3,9 @@ from typing import List
 
 import pymongo.errors
 from fastapi import FastAPI, Query
-from utils import State, Status
 from pymongo import MongoClient
-
+from utils import State, Status
 import firebase_admin
-from firebase_admin import credentials, messaging
-
 import utils
 
 app = FastAPI()
@@ -254,3 +251,29 @@ def delete_friend(uid: str, friend_uid: str):
         {"$unset": {f"friend_list.{uid}": 1}},
         False, True
     )
+
+
+@app.post("/session/{uid}")
+def init_friends_session(uid: str, friend_uid: str, genres_ids: list[int]):
+    # Check if user have an opened session with current friend
+    inSession = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": 3})) == []
+    print(inSession)
+    if not inSession:
+        db.Users.update_one(
+            {"uid": uid},
+            {"$set": {f"friend_list.{friend_uid}": State.SESSION}}
+        )
+        db.Users.update_one(
+            {"uid": friend_uid},
+            {"$set": {f"friend_list.{uid}": State.SESSION}}
+        )
+        top_n_recommendation = utils.get_recommendation(uid, friend_uid, genres_ids, db)
+        db.Sessions.insert_one({
+            "user_in_session": [uid, friend_uid],
+            "users_votes": {},
+            "results": [],
+            "users_voted": 0,
+            "recommendations": top_n_recommendation,
+            "is_active": True,
+            "state": utils.SessionStatus.WAITING_FOR_VOTES
+        })
