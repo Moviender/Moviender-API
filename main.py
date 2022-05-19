@@ -254,26 +254,30 @@ def delete_friend(uid: str, friend_uid: str):
 
 
 @app.post("/session/{uid}")
-def init_friends_session(uid: str, friend_uid: str, genres_ids: list[int]):
+def init_friends_session(uid: str, body: utils.SessionRequestBody):
     # Check if user have an opened session with current friend
-    inSession = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": 3})) == []
+    inSession = list(db.Users.find({"uid": uid, f"friend_list.{body.friend_uid}": 3})) == []
     print(inSession)
     if not inSession:
         db.Users.update_one(
             {"uid": uid},
-            {"$set": {f"friend_list.{friend_uid}": State.SESSION}}
+            {"$set": {f"friend_list.{body.friend_uid}": State.SESSION}}
         )
         db.Users.update_one(
-            {"uid": friend_uid},
+            {"uid": body.friend_uid},
             {"$set": {f"friend_list.{uid}": State.SESSION}}
         )
-        top_n_recommendation = utils.get_recommendation(uid, friend_uid, genres_ids, db)
+        top_n_recommendation = utils.get_recommendation(uid, body.friend_uid, body.genres_ids, db)
         db.Sessions.insert_one({
-            "user_in_session": [uid, friend_uid],
+            "user_in_session": [uid, body.friend_uid],
             "users_votes": {},
             "results": [],
             "users_voted": 0,
-            "recommendations": top_n_recommendation,
+            "recommendations": [],
             "is_active": True,
             "state": utils.SessionStatus.WAITING_FOR_VOTES
         })
+
+        return 1
+    else:
+        return -1

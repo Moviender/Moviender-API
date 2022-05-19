@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from enum import IntEnum
 from firebase_admin import messaging
-from surprise import dump
+#from surprise import dump
 
 
 class User(BaseModel):
@@ -23,6 +23,11 @@ class Rating(BaseModel):
 class UserRatings(BaseModel):
     uid: str
     ratings: list[Rating]
+
+
+class SessionRequestBody(BaseModel):
+    friend_uid: str
+    genres_ids: list[int]
 
 
 class State(IntEnum):
