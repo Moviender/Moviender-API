@@ -273,7 +273,7 @@ def init_friends_session(uid: str, body: utils.SessionRequestBody):
             "users_votes": {},
             "results": [],
             "users_voted": 0,
-            "recommendations": [],
+            "recommendations": top_n_recommendation,
             "is_active": True,
             "state": utils.SessionStatus.WAITING_FOR_VOTES
         })
