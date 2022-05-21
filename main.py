@@ -5,6 +5,7 @@ import pymongo.errors
 from fastapi import FastAPI, Query
 from pymongo import MongoClient
 from utils import State, Status
+from bson.objectid import ObjectId
 import firebase_admin
 import utils
 
@@ -50,6 +51,30 @@ async def is_user_initialized(uid: str):
         return result
     except IndexError:
         print(f"User with {uid} not found")
+
+
+@app.get("/session_movies/{session_id}")
+async def get_session_movies(session_id: str, next_page_key: int = None):
+    if next_page_key is None:
+        next_page_key = 0
+
+    session = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]
+
+    pipeline = [
+        {"$match": {"movielens_id": {"$in": session["recommendations"]}}},
+        {"$skip":  next_page_key},
+        {"$limit": 1},
+        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1,
+                      "vote_average": 1, "poster_path": 1}}
+    ]
+    cursor = list(db.Movies.aggregate(pipeline))
+
+    if next_page_key == 3:
+        next_page_key = None
+    else:
+        next_page_key += 1
+
+    return {"movies": cursor, "next_page_key": next_page_key}
 
 
 @app.get("/movies/{page}")
