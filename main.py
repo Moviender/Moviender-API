@@ -268,8 +268,8 @@ def init_friends_session(uid: str, body: utils.SessionRequestBody):
             {"$set": {f"friend_list.{uid}": State.SESSION}}
         )
         top_n_recommendation = utils.get_recommendation(uid, body.friend_uid, body.genres_ids, db)
-        db.Sessions.insert_one({
-            "user_in_session": [uid, body.friend_uid],
+        result = db.Sessions.insert_one({
+            "users_in_session": [uid, body.friend_uid],
             "users_votes": {},
             "results": [],
             "users_voted": 0,
@@ -278,6 +278,6 @@ def init_friends_session(uid: str, body: utils.SessionRequestBody):
             "state": utils.SessionStatus.WAITING_FOR_VOTES
         })
 
-        return 1
+        return {"object_id": str(result.inserted_id)}
     else:
         return -1
