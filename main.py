@@ -322,6 +322,6 @@ def init_friends_session(uid: str, body: utils.SessionRequestBody):
             "state": utils.SessionStatus.WAITING_FOR_VOTES
         })
 
-        return {"object_id": str(result.inserted_id)}
+        return {"session_id": str(result.inserted_id)}
     else:
-        return -1
+        return None
