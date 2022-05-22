@@ -74,7 +74,7 @@ async def get_session_movies(session_id: str, next_page_key: int = None):
         ]
         result.append(list(db.Movies.aggregate(pipeline))[0])
 
-    if next_page_key == 3:
+    if len(recommendations) < 10:
         next_page_key = None
     else:
         next_page_key += 1

@@ -209,3 +209,4 @@ fabric.properties
 /serviceAccountKey.json
 /TrainedModels/
 /ratings.dat
+/resources/
