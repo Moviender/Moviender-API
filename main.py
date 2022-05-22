@@ -60,21 +60,26 @@ async def get_session_movies(session_id: str, next_page_key: int = None):
 
     session = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]
 
-    pipeline = [
-        {"$match": {"movielens_id": {"$in": session["recommendations"]}}},
-        {"$skip":  next_page_key},
-        {"$limit": 1},
-        {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1,
-                      "vote_average": 1, "poster_path": 1}}
-    ]
-    cursor = list(db.Movies.aggregate(pipeline))
+    recommendations = session["recommendations"]
+
+    skip = 10 * next_page_key
+    limit = (10 * next_page_key) + 10
+    recommendations = recommendations[skip:limit]
+    result = []
+    for recommendation in recommendations:
+        pipeline = [
+            {"$match": {"movielens_id": recommendation}},
+            {"$project": {"_id": 0, "movielens_id": 1, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1,
+                          "vote_average": 1, "poster_path": 1}}
+        ]
+        result.append(list(db.Movies.aggregate(pipeline))[0])
 
     if next_page_key == 3:
         next_page_key = None
     else:
         next_page_key += 1
 
-    return {"movies": cursor, "next_page_key": next_page_key}
+    return {"movies": result, "next_page_key": next_page_key}
 
 
 @app.get("/movies/{page}")

@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from enum import IntEnum
 from firebase_admin import messaging
-#from surprise import dump
 from surprise import dump
 
 
