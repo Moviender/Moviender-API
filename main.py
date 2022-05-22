@@ -154,6 +154,25 @@ async def get_friend_list(uid: str):
     return friends
 
 
+@app.get("/session_id")
+async def get_session_id(uid: str, friend_uid: str):
+    cursor = str(list(db.Sessions.find({"$or": [{"users_in_session": [uid, friend_uid]}, {"users_in_session": [friend_uid, uid]}]}))[0]["_id"])
+
+    return  cursor
+
+@app.get("/session_state/{session_id}")
+async def get_session_state(session_id: str):
+    cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["state"]
+
+    return cursor
+
+@app.get("/user_state/{session_id}")
+async def get_user_state(session_id: str, uid: str):
+    cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_session_info"][uid]["state"]
+
+    return cursor
+
+
 @app.post("/user")
 async def insert_user(user: utils.User):
     try:
