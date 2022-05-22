@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from enum import IntEnum
 from firebase_admin import messaging
 #from surprise import dump
+from surprise import dump
 
 
 class User(BaseModel):
@@ -50,6 +51,11 @@ class SessionStatus(IntEnum):
     WAITING_FOR_VOTES = 0
     SUCCESSFUL_FINISH = 1
     FAILED_FINISH = -1
+
+
+class SessionUserStatus(IntEnum):
+    VOTING = 0
+    WAITING = 1
 
 
 def convert_user_ratings_to_json(user_ratings: UserRatings):
