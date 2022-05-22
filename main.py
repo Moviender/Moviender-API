@@ -314,6 +314,8 @@ def init_friends_session(uid: str, body: utils.SessionRequestBody):
         top_n_recommendation = utils.get_recommendation(uid, body.friend_uid, body.genres_ids, db)
         result = db.Sessions.insert_one({
             "users_in_session": [uid, body.friend_uid],
+            "users_session_info": {uid: {"state": utils.SessionUserStatus.VOTING, "voted_movies": []},
+                                   body.friend_uid: {"state": utils.SessionUserStatus.VOTING, "voted_movies": []}},
             "users_votes": {},
             "results": [],
             "users_voted": 0,
