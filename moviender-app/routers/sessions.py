@@ -17,6 +17,13 @@ async def get_session_id(uid: str, friend_uid: str):
     return cursor
 
 
+@router.get("/user_state/{session_id}")
+async def get_user_state(session_id: str, uid: str):
+    cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_session_info"][uid]["state"]
+
+    return cursor
+
+
 @router.get("/session_state/{session_id}", tags=["sessions"])
 async def get_session_state(session_id: str):
     cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["state"]
