@@ -17,7 +17,7 @@ async def get_session_id(uid: str, friend_uid: str):
     return cursor
 
 
-@router.get("/user_state/{session_id}")
+@router.get("/user_state/{session_id}", tags=["sessions"])
 async def get_user_state(session_id: str, uid: str):
     cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_session_info"][uid]["state"]
 
@@ -35,7 +35,9 @@ async def get_session_state(session_id: str):
 def init_friends_session(uid: str, body: SessionRequestBody):
     # Check if user have an opened session with current friend
     inSession = list(db.Users.find({"uid": uid, f"friend_list.{body.friend_uid}": 3})) == []
+
     print(inSession)
+
     if not inSession:
 
         top_n_recommendation = get_recommendation(uid, body.friend_uid, body.genres_ids, db)
