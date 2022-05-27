@@ -11,23 +11,22 @@ db = get_db_client()
 
 @router.get("/session_id", tags=["sessions"])
 async def get_session_id(uid: str, friend_uid: str):
-    cursor = str(list(
-        db.Sessions.find({"$or": [{"users_in_session": [uid, friend_uid]}, {"users_in_session": [friend_uid, uid]}]}))[
-                     0]["_id"])
-
+    cursor = str(db.Sessions.find_one({"$or": [
+        {"users_in_session": [uid, friend_uid]},
+        {"users_in_session": [friend_uid, uid]}]})["_id"])
     return cursor
 
 
 @router.get("/user_state/{session_id}", tags=["sessions"])
 async def get_user_state(session_id: str, uid: str):
-    cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_session_info"][uid]["state"]
+    cursor = db.Sessions.find_one({"_id": ObjectId(session_id)})["users_session_info"][uid]["state"]
 
     return cursor
 
 
 @router.get("/session_state/{session_id}", tags=["sessions"])
 async def get_session_state(session_id: str):
-    cursor = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["state"]
+    cursor = db.Sessions.find_one({"_id": ObjectId(session_id)})["state"]
 
     return cursor
 
@@ -81,8 +80,7 @@ async def vote_in_session(session_id: str, body: UserVotesBody):
             "$inc": {"users_voted": 1}}
     )
 
-    users_voted = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_voted"]
-    print(users_voted)
+    users_voted = db.Sessions.find_one({"_id": ObjectId(session_id)})["users_voted"]
 
     if users_voted == 2:
         return session_status_changed(session_id)
