@@ -2,7 +2,8 @@ from bson import ObjectId
 from fastapi import APIRouter
 
 from ..dependencies import get_db_client
-from ..utils import SessionStatus, State, SessionRequestBody, get_recommendation, SessionUserStatus
+from ..utils import SessionStatus, State, SessionRequestBody, UserVotesBody, get_recommendation, SessionUserStatus, \
+    session_status_changed
 
 router = APIRouter()
 db = get_db_client()
@@ -32,20 +33,17 @@ async def get_session_state(session_id: str):
 
 
 @router.post("/session/{uid}", tags=["sessions"])
-def init_friends_session(uid: str, body: SessionRequestBody):
+async def init_friends_session(uid: str, body: SessionRequestBody):
     # Check if user have an opened session with current friend
     inSession = list(db.Users.find({"uid": uid, f"friend_list.{body.friend_uid}": 3})) == []
 
-    print(inSession)
-
     if not inSession:
 
-        top_n_recommendation = get_recommendation(uid, body.friend_uid, body.genres_ids, db)
+        top_n_recommendation = get_recommendation(uid, body.friend_uid, body.genres_ids)
         result = db.Sessions.insert_one({
             "users_in_session": [uid, body.friend_uid],
             "users_session_info": {uid: {"state": SessionUserStatus.VOTING, "voted_movies": []},
                                    body.friend_uid: {"state": SessionUserStatus.VOTING, "voted_movies": []}},
-            "users_votes": {},
             "results": [],
             "users_voted": 0,
             "recommendations": top_n_recommendation,
@@ -65,3 +63,28 @@ def init_friends_session(uid: str, body: SessionRequestBody):
         return {"session_id": str(result.inserted_id)}
     else:
         return None
+
+
+@router.post("/vote_in_session/{session_id}", tags=["sessions"])
+async def vote_in_session(session_id: str, body: UserVotesBody):
+    uid = body.uid
+    voted_movies = body.votes
+
+    # insert user votes
+    # update user session status
+    # update number of user that has voted
+    result = db.Sessions.update_one(
+        {"_id": ObjectId(session_id)},
+        {
+            "$set": {f"users_session_info.{uid}.voted_movies": voted_movies,
+                     f"users_session_info.{uid}.state": SessionUserStatus.WAITING},
+            "$inc": {"users_voted": 1}}
+    )
+
+    users_voted = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]["users_voted"]
+    print(users_voted)
+
+    if users_voted == 2:
+        return session_status_changed(session_id)
+    else:
+        return SessionStatus.WAITING_FOR_VOTES

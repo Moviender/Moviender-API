@@ -8,7 +8,7 @@ db = get_db_client()
 
 
 @router.post("/friend_request/{uid}", tags=["friends"])
-def friend_request(uid: str, friend_username: str):
+async def friend_request(uid: str, friend_username: str):
     try:
         result = list(db.Users.find({"username": friend_username}, {"_id": 0}))[0]
         friend_uid = result["uid"]
@@ -40,7 +40,7 @@ def friend_request(uid: str, friend_username: str):
 
 
 @router.post("/respond_friend_request/{uid}", tags=["friends"])
-def respond_friend_request(uid: str, friend_uid: str, response: int):
+async def respond_friend_request(uid: str, friend_uid: str, response: int):
     if response == Status.ACCEPT_REQUEST:
         db.Users.update_one(
             {"uid": uid},
@@ -64,7 +64,7 @@ def respond_friend_request(uid: str, friend_uid: str, response: int):
 
 
 @router.post("/delete_friend/{uid}", tags=["friends"])
-def delete_friend(uid: str, friend_uid: str):
+async def delete_friend(uid: str, friend_uid: str):
     db.Users.update_one(
         {"uid": uid},
         {"$unset": {f"friend_list.{friend_uid}": 1}},

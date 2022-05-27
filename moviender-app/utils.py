@@ -1,7 +1,11 @@
 from pydantic import BaseModel
+from bson import ObjectId
 from enum import IntEnum
 from firebase_admin import messaging
 from surprise import dump
+from .dependencies import get_db_client
+
+db = get_db_client()
 
 
 class User(BaseModel):
@@ -28,6 +32,11 @@ class UserRatings(BaseModel):
 class SessionRequestBody(BaseModel):
     friend_uid: str
     genres_ids: list[int]
+
+
+class UserVotesBody(BaseModel):
+    uid: str
+    votes: list[bool]
 
 
 class State(IntEnum):
@@ -93,13 +102,13 @@ def send_friend_request_notification(username: str, token: str):
     print('Successfully sent message:', response)
 
 
-def get_recommendation(uid: str, friend_uid: str, genres_ids, db):
-    list_of_movies = fetch_movies(uid, friend_uid, genres_ids, db)
+def get_recommendation(uid: str, friend_uid: str, genres_ids):
+    list_of_movies = fetch_movies(uid, friend_uid, genres_ids)
     result_tuple = get_final_list(uid, friend_uid, list_of_movies)
     return [recommendation[0] for recommendation in result_tuple]
 
 
-def fetch_movies(uid: str, friend_uid: str, genres_ids, db):
+def fetch_movies(uid: str, friend_uid: str, genres_ids):
     firstUser = list(list(db.Ratings.find({"uid": uid}))[0]["ratings"].keys())
     secondUser = list(list(db.Ratings.find({"uid": friend_uid}))[0]["ratings"].keys())
 
@@ -138,3 +147,46 @@ def get_final_list(uid: str, friend_uid: str, list_of_movies):
     if len(user_combined_predictions) > 50:
         user_combined_predictions = user_combined_predictions[0:50]
     return user_combined_predictions
+
+
+def session_status_changed(session_id: str):
+    currentSession = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]
+    all_votes = []
+    recommendations = currentSession["recommendations"]
+    for user in currentSession["users_session_info"].keys():
+        all_votes.append(currentSession["users_session_info"][user]["voted_movies"])
+
+    # todo change for more users
+    result_votes = [user1 and user2 for user1, user2 in zip(all_votes[0], all_votes[1])]
+
+    # get list with movielens_ids
+    result_movies = []
+    for index, vote in enumerate(result_votes):
+        if vote:
+            result_movies.append(recommendations[index])
+
+    if result_movies != []:
+        db.Sessions.update_one(
+            {"_id": ObjectId(session_id)},
+            {"$set": {
+                "results": result_movies,
+                "state": SessionStatus.SUCCESSFUL_FINISH}}
+        )
+        return SessionStatus.SUCCESSFUL_FINISH
+
+    elif len(result_votes) == len(recommendations):
+        db.Sessions.update_one(
+            {"_id": ObjectId(session_id)},
+            {"$set": {"state": SessionStatus.FAILED_FINISH}}
+        )
+        return SessionStatus.FAILED_FINISH
+
+    else:
+        for user in currentSession["users_session_info"].keys():
+            if len(currentSession["users_session_info"][user]["voted_movies"]) < len(recommendations):
+                db.Sessions.update_one(
+                    {"_id": ObjectId(session_id)},
+                    {"$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING}},
+                    {"$inc": {"users_voted": -1}}
+                )
+        return SessionStatus.WAITING_FOR_VOTES

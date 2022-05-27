@@ -54,7 +54,7 @@ async def get_session_movies(session_id: str, next_page_key: int = None):
 
 
 @router.get("/movies/{page}", tags=["movies"])
-def get_movies(page: int = 1, genres: List[int] = Query([])):
+async def get_movies(page: int = 1, genres: List[int] = Query([])):
     if genres:
         match_genres = {"$or": [{"genre_ids": genre_id} for genre_id in genres]}
     else:
@@ -72,7 +72,7 @@ def get_movies(page: int = 1, genres: List[int] = Query([])):
 
 
 @router.get("/movie_details/{movie_id}", tags=["movies"])
-def get_movie_details(movie_id: str, uid: str):
+async def get_movie_details(movie_id: str, uid: str):
     match_movie_id = {"movielens_id": movie_id}
     pipeline = [
         {"$match": match_movie_id},
