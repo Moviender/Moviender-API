@@ -31,6 +31,15 @@ async def get_session_state(session_id: str):
     return cursor
 
 
+@router.get("/session_results/{session_id}")
+async def get_session_result_list(session_id: str):
+    session = db.Sessions.find_one({"_id": ObjectId(session_id)})
+    if session["state"] == SessionStatus.SUCCESSFUL_FINISH:
+        return session["results"]
+    else:
+        return []
+
+
 @router.post("/session/{uid}", tags=["sessions"])
 async def init_friends_session(uid: str, body: SessionRequestBody):
     # Check if user have an opened session with current friend
