@@ -10,10 +10,7 @@ db = get_db_client()
 @router.get("/initialized/{uid}", tags=["users"])
 async def is_user_initialized(uid: str):
     try:
-        result = list(db.Users.find({"uid": uid}, {"_id": 0, "is_user_initialized": 1}))[0]["is_user_initialized"]
-
-        print(result)
-
+        result = db.Users.find_one({"uid": uid}, {"_id": 0, "is_user_initialized": 1})["is_user_initialized"]
         return result
     except IndexError:
         print(f"User with {uid} not found")
@@ -21,14 +18,14 @@ async def is_user_initialized(uid: str):
 
 @router.get("/friends/{uid}", tags=["users"])
 async def get_friend_list(uid: str):
-    cursor = list(db.Users.find({"uid": uid}))[0]["friend_list"]
+    friend_list = db.Users.find_one({"uid": uid})["friend_list"]
     friends = []
-    for friend_uid in cursor.keys():
+    for friend_uid in friend_list.keys():
         # get username from friend uid
-        friend_username = list(db.Users.find({"uid": friend_uid}))[0]["username"]
+        friend_username = db.Users.find_one({"uid": friend_uid})["username"]
 
         # create Friend object
-        friend = Friend(uid=friend_uid, username=friend_username, state=cursor[friend_uid])
+        friend = Friend(uid=friend_uid, username=friend_username, state=friend_list[friend_uid])
 
         friends.append(friend)
 
