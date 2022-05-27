@@ -5,7 +5,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Query
 
 from ..dependencies import get_db_client, get_page_size
-from ..utils import UserRatings, get_movieid_rating
+from ..utils import UserRatings, get_movielens_id_rating
 
 router = APIRouter()
 db = get_db_client()
@@ -117,7 +117,7 @@ async def get_search_results(title: str = ""):
 @router.post("/rating", tags=["movies"])
 async def update_rating(user_rating: UserRatings):
     uid = user_rating.uid
-    movie_id, rating = get_movieid_rating(user_rating)
+    movie_id, rating = get_movielens_id_rating(user_rating)
 
     if rating != 0:
         db.Ratings.update_one(

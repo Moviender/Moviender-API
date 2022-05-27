@@ -78,7 +78,7 @@ def convert_user_ratings_to_json(user_ratings: UserRatings):
     return convertedUserRatings
 
 
-def get_movieid_rating(user_ratings: UserRatings):
+def get_movielens_id_rating(user_ratings: UserRatings):
     movie_id = None
     rating = None
 
@@ -109,8 +109,8 @@ def get_recommendation(uid: str, friend_uid: str, genres_ids):
 
 
 def fetch_movies(uid: str, friend_uid: str, genres_ids):
-    firstUser = list(list(db.Ratings.find({"uid": uid}))[0]["ratings"].keys())
-    secondUser = list(list(db.Ratings.find({"uid": friend_uid}))[0]["ratings"].keys())
+    firstUser = list(db.Ratings.find_one({"uid": uid})["ratings"].keys())
+    secondUser = list(db.Ratings.find_one({"uid": friend_uid})["ratings"].keys())
 
     mergedMoviesList = list(set(firstUser + secondUser))
 
@@ -150,44 +150,80 @@ def get_final_list(uid: str, friend_uid: str, list_of_movies):
 
 
 def session_status_changed(session_id: str):
-    currentSession = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]
-    all_votes = []
-    recommendations = currentSession["recommendations"]
-    for user in currentSession["users_session_info"].keys():
-        all_votes.append(currentSession["users_session_info"][user]["voted_movies"])
+    currentSession = get_current_session(session_id)
 
-    # todo change for more users
+    recommendations = currentSession["recommendations"]
+
+    result_movies, result_votes = get_result_movies_votes(currentSession, recommendations)
+
+    if result_movies != []:
+        return update_session_to_successful(session_id, result_movies)
+
+    elif all_movies_are_voted(len(result_votes), len(recommendations)):
+        return update_session_to_failed(session_id)
+    else:
+        return change_users_state_that_can_keep_voting(session_id, currentSession)
+
+
+def get_result_movies_votes(currentSession, recommendations):
+
+    all_votes = [currentSession["users_session_info"][user]["voted_movies"] for user in
+                 currentSession["users_session_info"].keys()]
+
+    # todo change logic for more than 2 users
     result_votes = [user1 and user2 for user1, user2 in zip(all_votes[0], all_votes[1])]
 
-    # get list with movielens_ids
     result_movies = []
+
     for index, vote in enumerate(result_votes):
         if vote:
             result_movies.append(recommendations[index])
+    return result_movies, result_votes
 
-    if result_movies != []:
-        db.Sessions.update_one(
-            {"_id": ObjectId(session_id)},
-            {"$set": {
-                "results": result_movies,
-                "state": SessionStatus.SUCCESSFUL_FINISH}}
-        )
-        return SessionStatus.SUCCESSFUL_FINISH
 
-    elif len(result_votes) == len(recommendations):
-        db.Sessions.update_one(
-            {"_id": ObjectId(session_id)},
-            {"$set": {"state": SessionStatus.FAILED_FINISH}}
-        )
-        return SessionStatus.FAILED_FINISH
+def get_current_session(session_id: str):
+    return db.Sessions.find_one({"_id": ObjectId(session_id)})
 
-    else:
-        for user in currentSession["users_session_info"].keys():
-            if len(currentSession["users_session_info"][user]["voted_movies"]) < len(recommendations):
-                db.Sessions.update_one(
-                    {"_id": ObjectId(session_id)},
-                    {
-                        "$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING},
-                        "$inc": {"users_voted": -1}}
-                )
-        return SessionStatus.WAITING_FOR_VOTES
+
+def update_session_to_successful(session_id: str, result_movies):
+    db.Sessions.update_one(
+        {"_id": ObjectId(session_id)},
+        {"$set": {
+            "results": result_movies,
+            "state": SessionStatus.SUCCESSFUL_FINISH}}
+    )
+    return SessionStatus.SUCCESSFUL_FINISH
+
+
+def all_movies_are_voted(num_result_votes, num_recommendations):
+    return num_result_votes == num_recommendations
+
+
+def user_have_more_movies_to_vote(num_user_votes: int, num_of_recommendations: int):
+    return num_user_votes < num_of_recommendations
+
+
+def update_session_to_failed(session_id: str):
+    db.Sessions.update_one(
+        {"_id": ObjectId(session_id)},
+        {"$set": {"state": SessionStatus.FAILED_FINISH}}
+    )
+    return SessionStatus.FAILED_FINISH
+
+
+def change_users_state_that_can_keep_voting(session_id, currentSession):
+
+    num_of_recommendations = len(currentSession["recommendations"])
+
+    for user in currentSession["users_session_info"].keys():
+
+        num_user_votes = len(currentSession["users_session_info"][user]["voted_movies"])
+
+        if user_have_more_movies_to_vote(num_user_votes, num_of_recommendations):
+            db.Sessions.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING},
+                    "$inc": {"users_voted": -1}}
+            )
+    return SessionStatus.WAITING_FOR_VOTES
