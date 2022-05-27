@@ -29,7 +29,7 @@ async def get_session_movies(session_id: str, next_page_key: int = None):
     if next_page_key is None:
         next_page_key = 0
 
-    session = list(db.Sessions.find({"_id": ObjectId(session_id)}))[0]
+    session = db.Sessions.find_one({"_id": ObjectId(session_id)})
 
     recommendations = session["recommendations"]
 
