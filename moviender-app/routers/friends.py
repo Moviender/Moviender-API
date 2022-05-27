@@ -10,16 +10,16 @@ db = get_db_client()
 @router.post("/friend_request/{uid}", tags=["friends"])
 async def friend_request(uid: str, friend_username: str):
     try:
-        result = list(db.Users.find({"username": friend_username}, {"_id": 0}))[0]
+        result = db.Users.find_one({"username": friend_username}, {"_id": 0})
         friend_uid = result["uid"]
 
         if uid == friend_uid:
             return Status.SAME_UID
 
-        cursor = list(db.Users.find({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}}))
-        if cursor == []:
-            token = list(db.Users.find({"uid": friend_uid}))[0]["fcm_token"]
-            username = list(db.Users.find({"uid": uid}, {"_id": 0}))[0]["username"]
+        cursor = db.Users.find_one({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}})
+        if cursor is None:
+            token = db.Users.find_one({"uid": friend_uid})["fcm_token"]
+            username = db.Users.find_one({"uid": uid}, {"_id": 0})["username"]
 
             send_friend_request_notification(username, token)
 
@@ -36,6 +36,7 @@ async def friend_request(uid: str, friend_username: str):
             return Status.ALREADY_EXISTS
 
     except IndexError:
+
         return Status.USERNAME_NOT_FOUND
 
 
