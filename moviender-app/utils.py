@@ -186,7 +186,8 @@ def session_status_changed(session_id: str):
             if len(currentSession["users_session_info"][user]["voted_movies"]) < len(recommendations):
                 db.Sessions.update_one(
                     {"_id": ObjectId(session_id)},
-                    {"$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING}},
-                    {"$inc": {"users_voted": -1}}
+                    {
+                        "$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING},
+                        "$inc": {"users_voted": -1}}
                 )
         return SessionStatus.WAITING_FOR_VOTES

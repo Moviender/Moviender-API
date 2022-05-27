@@ -73,7 +73,7 @@ async def vote_in_session(session_id: str, body: UserVotesBody):
     # insert user votes
     # update user session status
     # update number of user that has voted
-    result = db.Sessions.update_one(
+    db.Sessions.update_one(
         {"_id": ObjectId(session_id)},
         {
             "$set": {f"users_session_info.{uid}.voted_movies": voted_movies,
