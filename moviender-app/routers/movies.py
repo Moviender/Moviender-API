@@ -76,7 +76,8 @@ async def get_movie_details(movie_id: str, uid: str):
     match_movie_id = {"movielens_id": movie_id}
     pipeline = [
         {"$match": match_movie_id},
-        {"$project": {"_id": 0, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1, "vote_average": 1}}
+        {"$project": {"_id": 0, "poster_path": 1, "genre_ids": 1, "title": 1, "overview": 1, "release_date": 1,
+                      "vote_average": 1}}
     ]
 
     cursor = list(db.Movies.aggregate(pipeline))
