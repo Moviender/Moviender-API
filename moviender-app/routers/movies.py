@@ -98,6 +98,25 @@ async def get_movie_details(movie_id: str, uid: str):
     return result
 
 
+@router.get("/movie_rating/{movie_id}", tags=["movies"])
+async def get_movie_rating(movie_id: str, uid: str):
+    match = {"uid": uid, f"ratings.{movie_id}": {"$exists": True}}
+
+    pipeline = [
+        {"$match": match},
+        {"$project": {"_id": 0, f"ratings.{movie_id}": 1}}
+    ]
+
+    cursor = list(db.Ratings.aggregate(pipeline))
+
+    if cursor != []:
+        rating = cursor[0]["ratings"][movie_id]
+    else:
+        rating = 0.0
+
+    return rating
+
+
 @router.get("/search", tags=["movies"])
 async def get_search_results(title: str = ""):
     regx = re.compile(f".*{title}.*", re.IGNORECASE)
