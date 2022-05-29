@@ -47,24 +47,24 @@ class State(IntEnum):
 
 
 class Status(IntEnum):
-    SUCCESSFUL_FRIEND_REQUEST = 1
-    USERNAME_NOT_FOUND = -1
-    ALREADY_EXISTS = -2
-    SAME_UID = -3
-    ACCEPT_REQUEST = 1
-    DECLINE_REQUEST = 0
+    SUCCESSFUL_FRIEND_REQUEST = 11
+    USERNAME_NOT_FOUND = -10
+    ALREADY_EXISTS = -11
+    SAME_UID = -12
+    ACCEPT_REQUEST = 12
+    DECLINE_REQUEST = 10
 
 
 class SessionStatus(IntEnum):
-    WAITING_FOR_VOTES = 0
-    SUCCESSFUL_FINISH = 1
-    FAILED_FINISH = -1
+    WAITING_FOR_VOTES = 20
+    SUCCESSFUL_FINISH = 21
+    FAILED_FINISH = -20
 
 
 class SessionUserStatus(IntEnum):
-    VOTING = 0
-    WAITING = 1
-    VOTING_AGAIN = 10
+    VOTING = 30
+    WAITING = 31
+    VOTING_AGAIN = 32
 
 
 def convert_user_ratings_to_json(user_ratings: UserRatings):
