@@ -9,35 +9,34 @@ db = get_db_client()
 
 @router.post("/friend_request/{uid}", tags=["friends"])
 async def friend_request(uid: str, friend_username: str):
-    try:
-        result = db.Users.find_one({"username": friend_username}, {"_id": 0})
-        friend_uid = result["uid"]
+    result = db.Users.find_one({"username": friend_username}, {"_id": 0})
 
-        if uid == friend_uid:
-            return Status.SAME_UID
-
-        cursor = db.Users.find_one({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}})
-        if cursor is None:
-            token = db.Users.find_one({"uid": friend_uid})["fcm_token"]
-            username = db.Users.find_one({"uid": uid}, {"_id": 0})["username"]
-
-            send_friend_request_notification(username, token)
-
-            db.Users.update_one(
-                {"uid": uid},
-                {"$set": {f"friend_list.{friend_uid}": State.PENDING}}
-            )
-            db.Users.update_one(
-                {"uid": friend_uid},
-                {"$set": {f"friend_list.{uid}": State.REQUEST}}
-            )
-            return Status.SUCCESSFUL_FRIEND_REQUEST
-        else:
-            return Status.ALREADY_EXISTS
-
-    except IndexError:
-
+    if result is None:
         return Status.USERNAME_NOT_FOUND
+
+    friend_uid = result["uid"]
+
+    if uid == friend_uid:
+        return Status.SAME_UID
+
+    cursor = db.Users.find_one({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}})
+    if cursor is None:
+        token = db.Users.find_one({"uid": friend_uid})["fcm_token"]
+        username = db.Users.find_one({"uid": uid}, {"_id": 0})["username"]
+
+        send_friend_request_notification(username, token)
+
+        db.Users.update_one(
+            {"uid": uid},
+            {"$set": {f"friend_list.{friend_uid}": State.PENDING}}
+        )
+        db.Users.update_one(
+            {"uid": friend_uid},
+            {"$set": {f"friend_list.{uid}": State.REQUEST}}
+        )
+        return Status.SUCCESSFUL_FRIEND_REQUEST
+    else:
+        return Status.ALREADY_EXISTS
 
 
 @router.post("/respond_friend_request/{uid}", tags=["friends"])
