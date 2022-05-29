@@ -64,6 +64,7 @@ class SessionStatus(IntEnum):
 class SessionUserStatus(IntEnum):
     VOTING = 0
     WAITING = 1
+    VOTING_AGAIN = 10
 
 
 def convert_user_ratings_to_json(user_ratings: UserRatings):
@@ -223,7 +224,7 @@ def change_users_state_that_can_keep_voting(session_id, currentSession):
             db.Sessions.update_one(
                 {"_id": ObjectId(session_id)},
                 {
-                    "$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING},
+                    "$set": {f"users_session_info.{user}.state": SessionUserStatus.VOTING_AGAIN},
                     "$inc": {"users_voted": -1}}
             )
     return SessionStatus.WAITING_FOR_VOTES
