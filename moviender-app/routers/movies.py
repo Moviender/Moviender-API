@@ -25,13 +25,14 @@ async def get_starter():
 
 
 @router.get("/session_movies/{session_id}", tags=["movies"])
-async def get_session_movies(session_id: str, next_page_key: int = None):
+async def get_session_movies(session_id: str, uid: str, next_page_key: int = None):
     if next_page_key is None:
         next_page_key = 0
 
     session = db.Sessions.find_one({"_id": ObjectId(session_id)})
 
-    recommendations = session["recommendations"]
+    num_voted_movies = len(session["users_session_info"][uid]["voted_movies"])
+    recommendations = session["recommendations"][num_voted_movies:]
 
     skip = 10 * next_page_key
     limit = (10 * next_page_key) + 10
