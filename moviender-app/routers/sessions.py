@@ -31,7 +31,15 @@ async def get_session_state(session_id: str):
     return cursor
 
 
-@router.get("/session_results/{session_id}")
+@router.get("/session_user_votes/{session_id}", tags=["sessions"])
+async def get_user_num_votes(session_id: str, uid: str):
+    cursor = db.Sessions.find_one({"_id": ObjectId(session_id)})
+
+    num_voted_movies = len(cursor["users_session_info"][uid]["voted_movies"])
+    return num_voted_movies
+
+
+@router.get("/session_results/{session_id}", tags=["sessions"])
 async def get_session_result_list(session_id: str):
     session = db.Sessions.find_one({"_id": ObjectId(session_id)})
     if session["state"] == SessionStatus.SUCCESSFUL_FINISH:
