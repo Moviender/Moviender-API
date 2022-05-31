@@ -103,3 +103,27 @@ async def vote_in_session(session_id: str, body: UserVotesBody):
         return session_status_changed(session_id)
     else:
         return SessionStatus.WAITING_FOR_VOTES
+
+
+@router.post("/close_session/{session_id}", tags=["sessions"])
+async def close_session(session_id: str):
+    try:
+        cursor = db.Sessions.find_one({"_id": ObjectId(session_id)})
+        user1 = cursor["users_in_session"][0]
+        user2 = cursor["users_in_session"][1]
+
+        db.Users.update_one(
+            {"uid": user1},
+            {"$set": {f"friend_list.{user2}": State.FRIEND}}
+        )
+        db.Users.update_one(
+            {"uid": user2},
+            {"$set": {f"friend_list.{user1}": State.FRIEND}}
+        )
+
+        db.Sessions.delete_one({"_id": ObjectId(session_id)})
+        return True
+
+    except:
+
+        return False
