@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from ..dependencies import get_db_client
 from ..utils import SessionStatus, State, SessionRequestBody, UserVotesBody, get_recommendation, SessionUserStatus, \
-    session_status_changed
+    session_status_changed, SessionRequestBodySim, check_if_users_are_in_session, get_similar_movies
 
 router = APIRouter()
 db = get_db_client()
@@ -48,11 +48,9 @@ async def get_session_result_list(session_id: str):
         return []
 
 
-@router.post("/session/{uid}", tags=["sessions"])
-async def init_friends_session(uid: str, body: SessionRequestBody):
-
-    # Check if user have an opened session with current friend
-    inSession = db.Users.find_one({"uid": uid, f"friend_list.{body.friend_uid}": State.FRIEND})
+@router.post("/session_recommendations/{uid}", tags=["sessions"])
+async def init_friends_session_recommendations(uid: str, body: SessionRequestBody):
+    inSession = check_if_users_are_in_session(uid, body)
 
     if inSession is None:
         return {"session_id": None}
@@ -65,6 +63,38 @@ async def init_friends_session(uid: str, body: SessionRequestBody):
         "results": [],
         "users_voted": 0,
         "recommendations": top_n_recommendation,
+        "is_active": True,
+        "state": SessionStatus.WAITING_FOR_VOTES
+    })
+
+    db.Users.update_one(
+        {"uid": uid},
+        {"$set": {f"friend_list.{body.friend_uid}": State.SESSION}}
+    )
+    db.Users.update_one(
+        {"uid": body.friend_uid},
+        {"$set": {f"friend_list.{uid}": State.SESSION}}
+    )
+
+    return {"session_id": str(result.inserted_id)}
+
+
+@router.post("/session_sim/{uid}", tags=["sessions"])
+async def init_friends_session_sim(uid: str, body: SessionRequestBodySim):
+    inSession = check_if_users_are_in_session(uid, body)
+
+    if inSession is None:
+        return {"session_id": None}
+
+    top_n_similar_movies = get_similar_movies(body.movielens_id)
+
+    result = db.Sessions.insert_one({
+        "users_in_session": [uid, body.friend_uid],
+        "users_session_info": {uid: {"state": SessionUserStatus.VOTING, "voted_movies": []},
+                               body.friend_uid: {"state": SessionUserStatus.VOTING, "voted_movies": []}},
+        "results": [],
+        "users_voted": 0,
+        "recommendations": top_n_similar_movies,
         "is_active": True,
         "state": SessionStatus.WAITING_FOR_VOTES
     })

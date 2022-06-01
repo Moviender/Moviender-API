@@ -34,6 +34,11 @@ class SessionRequestBody(BaseModel):
     genres_ids: list[int]
 
 
+class SessionRequestBodySim(BaseModel):
+    friend_uid: str
+    movielens_id: str
+
+
 class UserVotesBody(BaseModel):
     uid: str
     votes: list[bool]
@@ -167,7 +172,6 @@ def session_status_changed(session_id: str):
 
 
 def get_result_movies_votes(currentSession, recommendations):
-
     all_votes = [currentSession["users_session_info"][user]["voted_movies"] for user in
                  currentSession["users_session_info"].keys()]
 
@@ -213,7 +217,6 @@ def update_session_to_failed(session_id: str):
 
 
 def change_users_state_that_can_keep_voting(session_id, currentSession):
-
     num_of_recommendations = len(currentSession["recommendations"])
 
     for user in currentSession["users_session_info"].keys():
@@ -228,3 +231,26 @@ def change_users_state_that_can_keep_voting(session_id, currentSession):
                     "$inc": {"users_voted": -1}}
             )
     return SessionStatus.WAITING_FOR_VOTES
+
+
+def check_if_users_are_in_session(uid, body):
+    return db.Users.find_one({"uid": uid, f"friend_list.{body.friend_uid}": State.FRIEND})
+
+
+
+
+def get_similar_movies(movielens_id: str):
+    # load a tuple with (prediction, trained-algorithm)
+    algo = dump.load("TrainedModels/trainedKNNBaseline.model")
+    # get just the algorithm
+    algo = algo[1]
+
+    input_movie_inner_id = algo.trainset.to_inner_iid(movielens_id)
+
+    # Retrieve inner ids of the nearest neighbors of input movie
+    input_movie_neighbors = algo.get_neighbors(input_movie_inner_id, k=20)
+
+    # Convert inner ids of the neighbors into raw ids
+    input_movie_neighbors = [algo.trainset.to_raw_iid(inner_id) for inner_id in input_movie_neighbors]
+
+    return input_movie_neighbors
