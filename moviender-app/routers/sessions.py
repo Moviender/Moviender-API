@@ -52,10 +52,10 @@ async def get_session_result_list(session_id: str):
 async def init_friends_session(uid: str, body: SessionRequestBody):
 
     # Check if user have an opened session with current friend
-    inSession = db.Users.find_one({"uid": uid, f"friend_list.{body.friend_uid}": 3})
+    inSession = db.Users.find_one({"uid": uid, f"friend_list.{body.friend_uid}": State.FRIEND})
 
     if inSession is None:
-        return None
+        return {"session_id": None}
 
     top_n_recommendation = get_recommendation(uid, body.friend_uid, body.genres_ids)
     result = db.Sessions.insert_one({
