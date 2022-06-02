@@ -29,6 +29,11 @@ class UserRatings(BaseModel):
     ratings: list[Rating]
 
 
+class UserGenrePreference(BaseModel):
+    uid: str
+    genres_ids: list[int]
+
+
 class SessionRequestBody(BaseModel):
     friend_uid: str
     genres_ids: list[int]
@@ -235,8 +240,6 @@ def change_users_state_that_can_keep_voting(session_id, currentSession):
 
 def check_if_users_are_in_session(uid, body):
     return db.Users.find_one({"uid": uid, f"friend_list.{body.friend_uid}": State.FRIEND})
-
-
 
 
 def get_similar_movies(movielens_id: str):

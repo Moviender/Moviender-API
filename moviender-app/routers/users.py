@@ -1,7 +1,7 @@
 import pymongo
 from fastapi import APIRouter
 from ..dependencies import get_db_client
-from ..utils import Friend, User, UserRatings, convert_user_ratings_to_json
+from ..utils import Friend, User, UserRatings, convert_user_ratings_to_json, UserGenrePreference
 
 router = APIRouter()
 db = get_db_client()
@@ -39,6 +39,7 @@ async def insert_user(user: User):
             "uid": user.uid,
             "username": user.username,
             "is_user_initialized": False,
+            "genre_preference": [],
             "friend_list": {}})
     except pymongo.errors.DuplicateKeyError:
         return "Key already exists"
@@ -65,4 +66,12 @@ async def insert_ratings(user_ratings: UserRatings):
     db.Users.update_one(
         {"uid": user_ratings.uid},
         {"$set": {"is_user_initialized": True}}
+    )
+
+
+@router.post("/userGenrePreference/", tags=["users"])
+async def insert_genre_preference(user_genre_pref: UserGenrePreference):
+    db.Users.update_one(
+        {"uid": user_genre_pref.uid},
+        {"$set": {"genre_preference": user_genre_pref.genres_ids}}
     )
