@@ -135,14 +135,16 @@ async def get_search_results(title: str = ""):
     return cursor
 
 
-@router.get("/user_recommendations/{uid}", tags=["movies"])
-async def get_user_recommendations(uid: str):
+@router.get("/user_recommendations/{page}", tags=["movies"])
+async def get_user_recommendations(page: int, uid: str):
     recommended_movies = get_personal_recommendation(uid)
 
     results = [{"movielens_id": movie["movielens_id"], "poster_path": movie["poster_path"]} for movie in
                recommended_movies]
 
-    return results
+    skip = PAGE_SIZE * page
+    limit = (PAGE_SIZE * page) + PAGE_SIZE
+    return results[skip:limit]
 
 @router.post("/rating", tags=["movies"])
 async def update_rating(user_rating: UserRatings):
