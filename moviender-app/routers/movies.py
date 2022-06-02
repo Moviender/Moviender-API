@@ -5,7 +5,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Query
 
 from ..dependencies import get_db_client, get_page_size
-from ..utils import UserRatings, get_movielens_id_rating
+from ..utils import UserRatings, get_movielens_id_rating, get_personal_recommendation
 
 router = APIRouter()
 db = get_db_client()
@@ -134,6 +134,15 @@ async def get_search_results(title: str = ""):
 
     return cursor
 
+
+@router.get("/user_recommendations/{uid}", tags=["movies"])
+async def get_user_recommendations(uid: str):
+    recommended_movies = get_personal_recommendation(uid)
+
+    results = [{"movielens_id": movie["movielens_id"], "poster_path": movie["poster_path"]} for movie in
+               recommended_movies]
+
+    return results
 
 @router.post("/rating", tags=["movies"])
 async def update_rating(user_rating: UserRatings):

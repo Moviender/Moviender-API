@@ -1,7 +1,7 @@
 import pymongo
 from fastapi import APIRouter
 from ..dependencies import get_db_client
-from ..utils import Friend, User, UserRatings, convert_user_ratings_to_json, UserGenrePreference
+from ..utils import Friend, User, UserRatings, convert_user_ratings_to_json, UserGenrePreferences
 
 router = APIRouter()
 db = get_db_client()
@@ -70,7 +70,7 @@ async def insert_ratings(user_ratings: UserRatings):
 
 
 @router.post("/userGenrePreference/", tags=["users"])
-async def insert_genre_preference(user_genre_pref: UserGenrePreference):
+async def insert_genre_preference(user_genre_pref: UserGenrePreferences):
     db.Users.update_one(
         {"uid": user_genre_pref.uid},
         {"$set": {"genre_preference": user_genre_pref.genres_ids}}

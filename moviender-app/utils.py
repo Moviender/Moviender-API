@@ -29,7 +29,7 @@ class UserRatings(BaseModel):
     ratings: list[Rating]
 
 
-class UserGenrePreference(BaseModel):
+class UserGenrePreferences(BaseModel):
     uid: str
     genres_ids: list[int]
 
@@ -257,3 +257,55 @@ def get_similar_movies(movielens_id: str):
     input_movie_neighbors = [algo.trainset.to_raw_iid(inner_id) for inner_id in input_movie_neighbors]
 
     return input_movie_neighbors
+
+
+def fetch_user_unwatched_movies(uid: str):
+    watched_movies = list(db.Ratings.find_one({"uid": uid})["ratings"].keys())
+
+    pipeline = [
+        {"$match": {"movielens_id": {"$nin": watched_movies}}},
+        {"$project": {"_id": 0, "movielens_id": 1, "vote_average": 1, "popularity": 1, "genre_ids": 1,
+                      "poster_path": 1}}
+    ]
+
+    cursor = db.Movies.aggregate(pipeline)
+    cursor = list(cursor)
+
+    return cursor
+
+
+def get_personal_recommendation(uid: str):
+    movies = fetch_user_unwatched_movies(uid)
+    genres_preferences = db.Users.find_one({"uid": uid})["genre_preference"]
+    movies = normalize_genres_based_on_preferences(movies, genres_preferences)
+    movies = calculate_score(movies)
+
+    movies.sort(reverse=True, key=lambda movie: movie["score"])
+
+    return movies[:min(20, len(movies))]
+
+
+def normalize_genres_based_on_preferences(movies: list, preferences: list):
+    preferences_set = set(preferences)
+    for movie in movies:
+        movie["genre_score"] = len(preferences_set.intersection(movie["genre_ids"])) / len(movie["genre_ids"])
+
+    return movies
+
+
+def calculate_score(movies: list):
+    genres_weight = 0.5
+    vote_average_weight = 0.25
+    popularity_weight = 0.25
+
+    vote_average_max = max(movies, key=lambda movie: movie["vote_average"])["vote_average"]
+    popularity_max = max(movies, key=lambda movie: movie["popularity"])["popularity"]
+    genre_score_max = max(movies, key=lambda movie: movie["genre_score"])["genre_score"]
+
+    for movie in movies:
+        movie_average_score = (movie["vote_average"] / vote_average_max) * vote_average_weight
+        movie_popularity_score = (movie["popularity"] / popularity_max) * popularity_weight
+        movie_genres_score = (movie["genre_score"] / genre_score_max) * genres_weight
+        movie["score"] = movie_genres_score + movie_popularity_score + movie_average_score
+
+    return movies
