@@ -142,8 +142,8 @@ async def get_user_recommendations(page: int, uid: str):
     results = [{"movielens_id": movie["movielens_id"], "poster_path": movie["poster_path"]} for movie in
                recommended_movies]
 
-    skip = PAGE_SIZE * page
-    limit = (PAGE_SIZE * page) + PAGE_SIZE
+    skip = PAGE_SIZE * (page - 1)
+    limit = (PAGE_SIZE * (page - 1)) + PAGE_SIZE
     return results[skip:limit]
 
 @router.post("/rating", tags=["movies"])
