@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel
 from bson import ObjectId
 from enum import IntEnum
@@ -18,7 +17,7 @@ class User(BaseModel):
 class Friend(BaseModel):
     uid: str
     username: str
-    profile_pic_url: Optional[str]
+    profile_pic_url: str
     state: int
 
 
