@@ -21,11 +21,12 @@ async def get_friend_list(uid: str):
     friend_list = db.Users.find_one({"uid": uid})["friend_list"]
     friends = []
     for friend_uid in friend_list.keys():
-        # get username from friend uid
-        friend_username = db.Users.find_one({"uid": friend_uid})["username"]
+        # get current friend from uid
+        current_friend = db.Users.find_one({"uid": friend_uid})
 
         # create Friend object
-        friend = Friend(uid=friend_uid, username=friend_username, state=friend_list[friend_uid])
+        friend = Friend(uid=friend_uid, username=current_friend["username"],
+                        profile_pic_url=current_friend["profile_pic_url"], state=friend_list[friend_uid])
 
         friends.append(friend)
 

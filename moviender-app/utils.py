@@ -17,6 +17,7 @@ class User(BaseModel):
 class Friend(BaseModel):
     uid: str
     username: str
+    profile_pic_url: str
     state: int
 
 
