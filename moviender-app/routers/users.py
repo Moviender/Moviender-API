@@ -38,6 +38,7 @@ async def insert_user(user: User):
         result = db.Users.insert_one({
             "uid": user.uid,
             "username": user.username,
+            "profile_pic": user.profile_pic_url,
             "is_user_initialized": False,
             "genre_preference": [],
             "friend_list": {}})

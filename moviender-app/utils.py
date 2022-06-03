@@ -11,6 +11,7 @@ db = get_db_client()
 class User(BaseModel):
     uid: str
     username: str
+    profile_pic_url: str
 
 
 class Friend(BaseModel):
