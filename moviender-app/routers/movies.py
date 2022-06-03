@@ -146,6 +146,7 @@ async def get_user_recommendations(page: int, uid: str):
     limit = (PAGE_SIZE * (page - 1)) + PAGE_SIZE
     return results[skip:limit]
 
+
 @router.post("/rating", tags=["movies"])
 async def update_rating(user_rating: UserRatings):
     uid = user_rating.uid

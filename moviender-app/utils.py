@@ -264,7 +264,7 @@ def fetch_user_unwatched_movies(uid: str):
 
     pipeline = [
         {"$match": {"movielens_id": {"$nin": watched_movies}}},
-        {"$project": {"_id": 0, "movielens_id": 1, "vote_average": 1, "popularity": 1, "genre_ids": 1,
+        {"$project": {"_id": 0, "movielens_id": 1, "vote_average": 1, "popularity": 1, "genre_ids": 1, "vote_count": 1,
                       "poster_path": 1}}
     ]
 
@@ -282,7 +282,7 @@ def get_personal_recommendation(uid: str):
 
     movies.sort(reverse=True, key=lambda movie: movie["score"])
 
-    return movies[:min(20, len(movies))]
+    return movies[:20]
 
 
 def normalize_genres_based_on_preferences(movies: list, preferences: list):
@@ -294,18 +294,21 @@ def normalize_genres_based_on_preferences(movies: list, preferences: list):
 
 
 def calculate_score(movies: list):
-    genres_weight = 0.5
-    vote_average_weight = 0.25
-    popularity_weight = 0.25
+    genres_weight = 0.4
+    vote_average_weight = 0.22
+    vote_count_weight = 0.18
+    popularity_weight = 0.20
 
     vote_average_max = max(movies, key=lambda movie: movie["vote_average"])["vote_average"]
+    vote_count_max = max(movies, key=lambda movie: movie["vote_count"])["vote_count"]
     popularity_max = max(movies, key=lambda movie: movie["popularity"])["popularity"]
     genre_score_max = max(movies, key=lambda movie: movie["genre_score"])["genre_score"]
 
     for movie in movies:
         movie_average_score = (movie["vote_average"] / vote_average_max) * vote_average_weight
+        movie_vote_count_score = (movie["vote_count"] / vote_count_max) * vote_count_weight
         movie_popularity_score = (movie["popularity"] / popularity_max) * popularity_weight
         movie_genres_score = (movie["genre_score"] / genre_score_max) * genres_weight
-        movie["score"] = movie_genres_score + movie_popularity_score + movie_average_score
+        movie["score"] = movie_genres_score + movie_popularity_score + movie_average_score + movie_vote_count_score
 
     return movies
