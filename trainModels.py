@@ -8,7 +8,7 @@ db = client.MovienderDB
 
 
 def export_data_file():
-    filePath = "C:\\Users\\Petros\\PycharmProjects\\LightFM_examples\\movielens\\dataset\\ml-1m\\ratings.dat"
+    filePath = "resources/initial_ratings.dat"
     ratings = []
 
     with io.open(filePath, 'r', encoding='ISO-8859-1') as f:
@@ -36,7 +36,7 @@ def export_data_file():
 
 
 def load_custom_dataset():
-    file_path_large = "C:\\Users\\Petros\\PycharmProjects\\Moviender-API\\ratings.dat"
+    file_path_large = "resources/ratings.dat"
 
     reader_large = Reader(line_format='user item rating timestamp', sep='::')
 
@@ -52,7 +52,7 @@ def train_svd():
     algo.fit(trainset)
 
     # dump trained algorithm
-    file_name = os.path.expanduser('TrainedModels\\trainedSVDAlgo.model')
+    file_name = os.path.expanduser('TrainedModels/trainedSVDAlgo.model')
     dump.dump(file_name=file_name, algo=algo)
 
 
@@ -67,7 +67,7 @@ def train_knn():
     algo.fit(trainset)
 
     # dump trained algorithm
-    file_name = os.path.expanduser('TrainedModels\\trainedKNNBaseline.model')
+    file_name = os.path.expanduser('TrainedModels/trainedKNNBaseline.model')
     dump.dump(file_name=file_name, algo=algo)
 
 
