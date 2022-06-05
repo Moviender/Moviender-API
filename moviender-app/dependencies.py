@@ -1,6 +1,10 @@
 from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
 
-client = MongoClient('mongodb://localhost:27017')
+load_dotenv()
+
+client = MongoClient(os.getenv("DB_CONNECTION_STRING"))
 db = client.MovienderDB
 PAGE_SIZE = 15
 
