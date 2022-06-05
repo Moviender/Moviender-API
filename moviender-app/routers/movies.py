@@ -14,8 +14,10 @@ PAGE_SIZE = get_page_size()
 
 @router.get("/starter", tags=["movies"])
 async def get_starter():
+    movies = ["260", "1270", "1240", "2571", "1", "595", "3785", "858", "1721", "586", "592", "1997", "1407", "2706",
+              "2028", "553", "745"]
     pipeline = [
-        {"$sample": {"size": 15}},
+        {"$match": {"movielens_id": {"$in": movies}}},
         {"$project": {"_id": 0, "movielens_id": 1, "poster_path": 1}}
     ]
 
