@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel
 from bson import ObjectId
 from enum import IntEnum
@@ -28,17 +29,17 @@ class Rating(BaseModel):
 
 class UserRatings(BaseModel):
     uid: str
-    ratings: list[Rating]
+    ratings: List[Rating]
 
 
 class UserGenrePreferences(BaseModel):
     uid: str
-    genres_ids: list[int]
+    genres_ids: List[int]
 
 
 class SessionRequestBody(BaseModel):
     friend_uid: str
-    genres_ids: list[int]
+    genres_ids: List[int]
 
 
 class SessionRequestBodySim(BaseModel):
@@ -48,7 +49,7 @@ class SessionRequestBodySim(BaseModel):
 
 class UserVotesBody(BaseModel):
     uid: str
-    votes: list[bool]
+    votes: List[bool]
 
 
 class State(IntEnum):
