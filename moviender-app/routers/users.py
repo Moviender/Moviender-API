@@ -26,7 +26,7 @@ async def get_friend_list(uid: str):
 
         # create Friend object
         friend = Friend(uid=friend_uid, username=current_friend["username"],
-                        profile_pic_url=current_friend["profile_pic_url"], state=friend_list[friend_uid])
+                        profile_pic_url=current_friend["profile_pic"], state=friend_list[friend_uid])
 
         friends.append(friend)
 
