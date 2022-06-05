@@ -18,17 +18,21 @@ def export_data_file():
 
     cursor = list(db.Ratings.find())
 
+    movies = list(db.Movies.find())
+    movies_ids = [movie["movielens_id"] for movie in movies]
+
     for user in cursor:
         for movie_id in user["ratings"].keys():
             ratings.append([user['uid'], movie_id, user["ratings"][movie_id], "000000000"])
 
     with open("ratings.dat", 'w') as f:
         for rating in ratings:
-            uid = rating[0]
-            movie_id = rating[1]
-            rating_value = int(rating[2])
-            timestamp = rating[3].strip()
-            f.write(f"{uid}::{movie_id}::{rating_value}::{timestamp}\n")
+            if rating[1] in movies_ids:
+                uid = rating[0]
+                movie_id = rating[1]
+                rating_value = int(rating[2])
+                timestamp = rating[3].strip()
+                f.write(f"{uid}::{movie_id}::{rating_value}::{timestamp}\n")
 
 
 def load_custom_dataset():
