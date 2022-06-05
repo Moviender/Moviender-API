@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from ..dependencies import get_db_client
 from ..utils import SessionStatus, State, SessionRequestBody, UserVotesBody, get_recommendation, SessionUserStatus, \
-    session_status_changed, SessionRequestBodySim, check_if_users_are_in_session, get_similar_movies
+    session_status_changed, SessionRequestBodySim, check_if_users_are_in_session, get_similar_movies, find_session_id
 
 router = APIRouter()
 db = get_db_client()
@@ -11,10 +11,8 @@ db = get_db_client()
 
 @router.get("/session_id", tags=["sessions"])
 async def get_session_id(uid: str, friend_uid: str):
-    cursor = str(db.Sessions.find_one({"$or": [
-        {"users_in_session": [uid, friend_uid]},
-        {"users_in_session": [friend_uid, uid]}]})["_id"])
-    return cursor
+    session_id = find_session_id(uid, friend_uid)
+    return session_id
 
 
 @router.get("/user_state/{session_id}", tags=["sessions"])

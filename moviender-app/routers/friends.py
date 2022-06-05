@@ -1,7 +1,9 @@
+import bson
+from bson import ObjectId
 from fastapi import APIRouter
 
 from ..dependencies import get_db_client
-from ..utils import Status, State, send_friend_request_notification
+from ..utils import Status, State, send_friend_request_notification, find_session_id
 
 router = APIRouter()
 db = get_db_client()
@@ -65,13 +67,22 @@ async def respond_friend_request(uid: str, friend_uid: str, response: int):
 
 @router.post("/delete_friend/{uid}", tags=["friends"])
 async def delete_friend(uid: str, friend_uid: str):
-    db.Users.update_one(
-        {"uid": uid},
-        {"$unset": {f"friend_list.{friend_uid}": 1}},
-        False, True
-    )
-    db.Users.update_one(
-        {"uid": friend_uid},
-        {"$unset": {f"friend_list.{uid}": 1}},
-        False, True
-    )
+    try:
+
+        db.Users.update_one(
+            {"uid": uid},
+            {"$unset": {f"friend_list.{friend_uid}": 1}},
+            False, True
+        )
+
+        db.Users.update_one(
+            {"uid": friend_uid},
+            {"$unset": {f"friend_list.{uid}": 1}},
+            False, True
+        )
+
+        session_id = find_session_id(uid, friend_uid)
+
+        db.Sessions.delete_one({"_id": ObjectId(session_id)})
+    except bson.errors.InvalidId:
+        return

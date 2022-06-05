@@ -314,3 +314,14 @@ def calculate_score(movies: list):
         movie["score"] = movie_genres_score + movie_popularity_score + movie_average_score + movie_vote_count_score
 
     return movies
+
+
+def find_session_id(uid: str, friend_uid: str):
+    try:
+        session_id = str(db.Sessions.find_one({"$or": [
+            {"users_in_session": [uid, friend_uid]},
+            {"users_in_session": [friend_uid, uid]}]})["_id"])
+
+        return session_id
+    except:
+        return ""
