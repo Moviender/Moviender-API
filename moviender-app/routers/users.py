@@ -45,7 +45,8 @@ async def insert_user(user: User):
             "profile_pic": user.profile_pic_url,
             "is_user_initialized": False,
             "genre_preference": [],
-            "friend_list": {}})
+            "friend_list": {},
+            "fcm_token": None})
         return True
     except pymongo.errors.DuplicateKeyError:
         return False

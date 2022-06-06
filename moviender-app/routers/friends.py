@@ -29,11 +29,13 @@ async def friend_request(uid: str, friend_username: str):
         if not current_friend["is_user_initialized"]:
             return Status.USERNAME_NOT_FOUND
 
-        token = current_friend["fcm_token"]
 
         username = db.Users.find_one({"uid": uid})["username"]
 
-        send_friend_request_notification(username, token)
+        token = current_friend["fcm_token"]
+
+        if token is not None:
+            send_friend_request_notification(username, token)
 
         db.Users.update_one(
             {"uid": uid},
