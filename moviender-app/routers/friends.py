@@ -43,26 +43,30 @@ async def friend_request(uid: str, friend_username: str):
 
 @router.post("/respond_friend_request/{uid}", tags=["friends"])
 async def respond_friend_request(uid: str, friend_uid: str, response: int):
-    if response == Status.ACCEPT_REQUEST:
-        db.Users.update_one(
-            {"uid": uid},
-            {"$set": {f"friend_list.{friend_uid}": State.FRIEND}}
-        )
-        db.Users.update_one(
-            {"uid": friend_uid},
-            {"$set": {f"friend_list.{uid}": State.FRIEND}}
-        )
-    elif response == Status.DECLINE_REQUEST:
-        db.Users.update_one(
-            {"uid": uid},
-            {"$unset": {f"friend_list.{friend_uid}": 1}},
-            False, True
-        )
-        db.Users.update_one(
-            {"uid": friend_uid},
-            {"$unset": {f"friend_list.{uid}": 1}},
-            False, True
-        )
+    try:
+        if response == Status.ACCEPT_REQUEST:
+            db.Users.update_one(
+                {"uid": uid},
+                {"$set": {f"friend_list.{friend_uid}": State.FRIEND}}
+            )
+            db.Users.update_one(
+                {"uid": friend_uid},
+                {"$set": {f"friend_list.{uid}": State.FRIEND}}
+            )
+        elif response == Status.DECLINE_REQUEST:
+            db.Users.update_one(
+                {"uid": uid},
+                {"$unset": {f"friend_list.{friend_uid}": 1}},
+                False, True
+            )
+            db.Users.update_one(
+                {"uid": friend_uid},
+                {"$unset": {f"friend_list.{uid}": 1}},
+                False, True
+            )
+        return True
+    except:
+        return False
 
 
 @router.post("/delete_friend/{uid}", tags=["friends"])
@@ -84,5 +88,8 @@ async def delete_friend(uid: str, friend_uid: str):
         session_id = find_session_id(uid, friend_uid)
 
         db.Sessions.delete_one({"_id": ObjectId(session_id)})
+        return True
     except bson.errors.InvalidId:
-        return
+        return True
+    except Exception:
+        return False

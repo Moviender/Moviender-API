@@ -151,17 +151,21 @@ async def get_user_recommendations(page: int, uid: str):
 
 @router.post("/rating", tags=["movies"])
 async def update_rating(user_rating: UserRatings):
-    uid = user_rating.uid
-    movie_id, rating = get_movielens_id_rating(user_rating)
+    try:
+        uid = user_rating.uid
+        movie_id, rating = get_movielens_id_rating(user_rating)
 
-    if rating != 0:
-        db.Ratings.update_one(
-            {"uid": uid},
-            {"$set": {f"ratings.{movie_id}": float(rating)}}
-        )
-    else:
-        db.Ratings.update_one(
-            {"uid": uid},
-            {"$unset": {f"ratings.{movie_id}": 1}},
-            False, True
-        )
+        if rating != 0:
+            db.Ratings.update_one(
+                {"uid": uid},
+                {"$set": {f"ratings.{movie_id}": float(rating)}}
+            )
+        else:
+            db.Ratings.update_one(
+                {"uid": uid},
+                {"$unset": {f"ratings.{movie_id}": 1}},
+                False, True
+            )
+        return True
+    except:
+        return False

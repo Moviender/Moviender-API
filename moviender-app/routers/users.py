@@ -12,25 +12,28 @@ async def is_user_initialized(uid: str):
     try:
         result = db.Users.find_one({"uid": uid}, {"_id": 0, "is_user_initialized": 1})["is_user_initialized"]
         return result
-    except IndexError:
-        print(f"User with {uid} not found")
+    except:
+        return False
 
 
 @router.get("/friends/{uid}", tags=["users"])
 async def get_friend_list(uid: str):
-    friend_list = db.Users.find_one({"uid": uid})["friend_list"]
-    friends = []
-    for friend_uid in friend_list.keys():
-        # get current friend from uid
-        current_friend = db.Users.find_one({"uid": friend_uid})
+    try:
+        friend_list = db.Users.find_one({"uid": uid})["friend_list"]
+        friends = []
+        for friend_uid in friend_list.keys():
+            # get current friend from uid
+            current_friend = db.Users.find_one({"uid": friend_uid})
 
-        # create Friend object
-        friend = Friend(uid=friend_uid, username=current_friend["username"],
-                        profile_pic_url=current_friend["profile_pic"], state=friend_list[friend_uid])
+            # create Friend object
+            friend = Friend(uid=friend_uid, username=current_friend["username"],
+                            profile_pic_url=current_friend["profile_pic"], state=friend_list[friend_uid])
 
-        friends.append(friend)
+            friends.append(friend)
 
-    return friends
+        return friends
+    except:
+        return []
 
 
 @router.post("/user", tags=["users"])
@@ -43,37 +46,49 @@ async def insert_user(user: User):
             "is_user_initialized": False,
             "genre_preference": [],
             "friend_list": {}})
+        return True
     except pymongo.errors.DuplicateKeyError:
-        return "Key already exists"
-    if result.acknowledged:
-        return "inserted"
-    else:
-        return "Error"
+        return False
+    except Exception:
+        return False
 
 
 @router.post("/fcm_token/{uid}", tags=["users"])
 async def update_user_fcm_token(uid: str, token: str):
-    db.Users.update_one(
-        {"uid": uid},
-        {"$set": {"fcm_token": token}}
-    )
+    try:
+        db.Users.update_one(
+            {"uid": uid},
+            {"$set": {"fcm_token": token}}
+        )
+        return True
+    except Exception:
+        return False
 
 
 @router.post("/userInitialization", tags=["users"])
 async def insert_ratings(user_ratings: UserRatings):
-    json_ratings = convert_user_ratings_to_json(user_ratings=user_ratings)
+    try:
 
-    db.Ratings.insert_one(json_ratings)
+        json_ratings = convert_user_ratings_to_json(user_ratings=user_ratings)
 
-    db.Users.update_one(
-        {"uid": user_ratings.uid},
-        {"$set": {"is_user_initialized": True}}
-    )
+        db.Ratings.insert_one(json_ratings)
+
+        db.Users.update_one(
+            {"uid": user_ratings.uid},
+            {"$set": {"is_user_initialized": True}}
+        )
+        return True
+    except Exception:
+        return False
 
 
 @router.post("/userGenrePreference/", tags=["users"])
 async def insert_genre_preference(user_genre_pref: UserGenrePreferences):
-    db.Users.update_one(
-        {"uid": user_genre_pref.uid},
-        {"$set": {"genre_preference": user_genre_pref.genres_ids}}
-    )
+    try:
+        db.Users.update_one(
+            {"uid": user_genre_pref.uid},
+            {"$set": {"genre_preference": user_genre_pref.genres_ids}}
+        )
+        return True
+    except Exception:
+        return False

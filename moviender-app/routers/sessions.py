@@ -151,7 +151,5 @@ async def close_session(session_id: str):
 
         db.Sessions.delete_one({"_id": ObjectId(session_id)})
         return True
-
     except:
-
         return False
