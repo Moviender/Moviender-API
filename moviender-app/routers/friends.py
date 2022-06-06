@@ -23,8 +23,15 @@ async def friend_request(uid: str, friend_username: str):
 
     cursor = db.Users.find_one({"uid": uid, f"friend_list.{friend_uid}": {"$exists": True}})
     if cursor is None:
-        token = db.Users.find_one({"uid": friend_uid})["fcm_token"]
-        username = db.Users.find_one({"uid": uid}, {"_id": 0})["username"]
+
+        # check if friend account is initialized
+        current_friend = db.Users.find_one({"uid": friend_uid})
+        if not current_friend["is_user_initialized"]:
+            return Status.USERNAME_NOT_FOUND
+
+        token = current_friend["fcm_token"]
+
+        username = db.Users.find_one({"uid": uid})["username"]
 
         send_friend_request_notification(username, token)
 
