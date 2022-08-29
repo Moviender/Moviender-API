@@ -1,6 +1,6 @@
 import bson
 from bson import ObjectId
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 
 from ..dependencies import get_db_client
 from ..utils import Status, State, send_friend_request_notification, find_session_id
@@ -10,7 +10,7 @@ db = get_db_client()
 
 
 @router.post("/friend_request/{uid}", tags=["friends"])
-async def friend_request(uid: str, friend_username: str):
+async def friend_request(uid: str, friend_username: str, background_task: BackgroundTasks):
     result = db.Users.find_one({"username": friend_username}, {"_id": 0})
 
     if result is None:
@@ -35,6 +35,7 @@ async def friend_request(uid: str, friend_username: str):
         token = current_friend["fcm_token"]
 
         if token is not None:
+            background_task.add_task(send_friend_request_notification, username, token)
             send_friend_request_notification(username, token)
 
         db.Users.update_one(
