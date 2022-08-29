@@ -25,7 +25,7 @@ def export_data_file():
         for movie_id in user["ratings"].keys():
             ratings.append([user['uid'], movie_id, user["ratings"][movie_id], "000000000"])
 
-    with open("ratings.dat", 'w') as f:
+    with open("resources/ratings.dat", 'w') as f:
         for rating in ratings:
             if rating[1] in movies_ids:
                 uid = rating[0]
@@ -44,16 +44,17 @@ def load_custom_dataset():
 
 
 def train_svd():
+    # load custom dataset
     data = load_custom_dataset()
-
     trainset = data.build_full_trainset()
 
-    algo = SVD(n_factors=40, n_epochs=20, lr_all=0.005)
+    algo = SVD(n_factors=150, n_epochs=25, lr_all=0.01, reg_all=0.5, verbose=True)
     algo.fit(trainset)
 
     # dump trained algorithm
     file_name = os.path.expanduser('TrainedModels/trainedSVDAlgo.model')
     dump.dump(file_name=file_name, algo=algo)
+    print("SVD Training done!")
 
 
 def train_knn():
@@ -63,12 +64,13 @@ def train_knn():
 
     # First, train the algorithm to compute the similarities between items
     sim_options = {'name': 'pearson_baseline', 'user_based': False}
-    algo = KNNBaseline(sim_options=sim_options)
+    algo = KNNBaseline(k=40, min_k=15, sim_options=sim_options)
     algo.fit(trainset)
 
     # dump trained algorithm
     file_name = os.path.expanduser('TrainedModels/trainedKNNBaseline.model')
     dump.dump(file_name=file_name, algo=algo)
+    print("KNNBaseline Training done!")
 
 
 def main():
