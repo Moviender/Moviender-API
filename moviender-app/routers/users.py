@@ -35,6 +35,9 @@ async def get_friend_list(uid: str):
     except:
         return []
 
+@router.get("/genrePreferences/{uid}", tags=["users"])
+async def get_user_preferences(uid: str):
+    return db.Users.find_one({"uid": uid})["genre_preference"]
 
 @router.post("/user", tags=["users"])
 async def insert_user(user: User):
