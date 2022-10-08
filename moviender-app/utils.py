@@ -155,7 +155,8 @@ def get_final_list(uid: str, friend_uid: str, list_of_movies):
     for movie_id in list_of_movies:
         user_pred = algo.predict(uid, movie_id)
         friend_user_pred = algo.predict(friend_uid, movie_id)
-        user_combined_predictions.append((movie_id, (user_pred.est + friend_user_pred.est) / 2.0))
+        # user_combined_predictions.append((movie_id, (user_pred.est + friend_user_pred.est) / 2.0))
+        user_combined_predictions.append((movie_id, user_pred.est * friend_user_pred.est))
 
     user_combined_predictions.sort(key=lambda x: x[1], reverse=True)
     if len(user_combined_predictions) > 50:
