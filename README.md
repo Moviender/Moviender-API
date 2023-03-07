@@ -6,7 +6,7 @@ A restful API that was created as the backend of the [Moviender](https://github.
 ## Routers
 
 ### Users
-The users router contains all the **GET** and **POST** requests that have to do with the user accounts and information.
+The users router contains all the requests that have to do with the user accounts and information.
 
 **e.g.**
 
@@ -14,7 +14,7 @@ The users router contains all the **GET** and **POST** requests that have to do 
 * POST `/user_genre_preference/` stores a user genre preferences to the database.
 
 ### Movies
-The movies router contains all the **GET** and **POST** requests that have to do with the movie metadata, ratings and recommendations.
+The movies router contains all the requests that have to do with the movie metadata, ratings and recommendations.
 
 **e.g.**
 
@@ -22,7 +22,7 @@ The movies router contains all the **GET** and **POST** requests that have to do
 * POST `/rating/` stores a user rating for a specific movie.
 
 ### Friends
-The friends router contains all the **GET** and **POST** requests that have to do with friend list and requests of the application.
+The friends router contains all the requests that have to do with friend list and requests of the application.
 
 **e.g.**
 
@@ -30,7 +30,7 @@ The friends router contains all the **GET** and **POST** requests that have to d
 * POST `/friend_request/{uid}` stores the friend request of a user.
 
 ### Sessions
-The sessions router contains all the **GET** and **POST** requests that have to do with recommendation sessions of the application.
+The sessions router contains all the requests that have to do with recommendation sessions of the application.
 
 **e.g.**
 
